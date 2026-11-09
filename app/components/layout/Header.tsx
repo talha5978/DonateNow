@@ -1,4 +1,5 @@
 import { Link, NavLink } from "react-router";
+import { useState } from "react";
 import { User, Heart, FileText, PlusCircle } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
@@ -10,6 +11,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { LogoutButton } from "~/components/LogoutButton";
+import { ProfileDialog } from "~/components/ProfileDialog";
 import type { Database } from "~/types/database";
 import type { User as SUser } from "@supabase/supabase-js";
 
@@ -19,6 +21,9 @@ interface HeaderProps {
 }
 
 export function Header({ profile: user, user: currentUser }: HeaderProps) {
+	const [menuOpen, setMenuOpen] = useState(false);
+	const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+
 	const initials = user?.full_name
 		? user.full_name
 				.split(" ")
@@ -26,6 +31,12 @@ export function Header({ profile: user, user: currentUser }: HeaderProps) {
 				.join("")
 				.toUpperCase()
 		: user?.email?.[0].toUpperCase() || "DN";
+
+	// Combine profile data with current auth email for the dialog
+	const profileWithEmail = {
+		...user,
+		email: currentUser?.email || user?.email,
+	};
 
 	return (
 		<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -83,71 +94,82 @@ export function Header({ profile: user, user: currentUser }: HeaderProps) {
 					</Link>
 
 					{user ? (
-						<DropdownMenu>
-							<DropdownMenuTrigger>
-								<Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
-									<Avatar className="h-9 w-9 border border-border">
-										<AvatarImage
-											src={
-												currentUser?.user_metadata.avatar_url ||
-												currentUser?.user_metadata.picture ||
-												undefined
-											}
-											alt={user.full_name || "User"}
-										/>
-										<AvatarFallback className="bg-accent text-primary font-semibold text-xs">
-											{initials}
-										</AvatarFallback>
-									</Avatar>
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent className="w-56" align="end">
-								<div className="flex items-center justify-between gap-2 p-2">
-									<div className="flex flex-col space-y-1 leading-none">
-										{user.full_name && (
-											<p className="font-medium text-sm text-foreground">
-												{user.full_name}
+						<>
+							<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+								<DropdownMenuTrigger>
+									<Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
+										<Avatar className="h-9 w-9 border border-border">
+											<AvatarImage
+												src={
+													currentUser?.user_metadata.avatar_url ||
+													currentUser?.user_metadata.picture ||
+													undefined
+												}
+												alt={user.full_name || "User"}
+											/>
+											<AvatarFallback className="bg-accent text-primary font-semibold text-xs">
+												{initials}
+											</AvatarFallback>
+										</Avatar>
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent className="w-56" align="end">
+									<div className="flex items-center justify-between gap-2 p-2">
+										<div className="flex flex-col space-y-1 leading-none">
+											{user.full_name && (
+												<p className="font-medium text-sm text-foreground">
+													{user.full_name}
+												</p>
+											)}
+											<p className="text-xs text-muted-foreground truncate max-w-45">
+												{user.email}
 											</p>
-										)}
-										<p className="text-xs text-muted-foreground truncate max-w-45">
-											{user.email}
-										</p>
+										</div>
 									</div>
-								</div>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem>
-									<Link
-										to="/profile"
-										className="cursor-pointer flex items-center gap-2 w-full"
+									<DropdownMenuSeparator />
+
+									<DropdownMenuItem
+										className="cursor-pointer"
+										onClick={() => {
+											setMenuOpen(false);
+											setProfileDialogOpen(true);
+										}}
 									>
 										<User className="h-4 w-4" />
 										<span>My Profile</span>
-									</Link>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<Link
-										to="/my-requests"
-										className="cursor-pointer flex items-center gap-2 w-full"
-									>
-										<FileText className="h-4 w-4" />
-										<span>My Requests</span>
-									</Link>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<Link
-										to="/my-donations"
-										className="cursor-pointer flex items-center gap-2 w-full"
-									>
-										<Heart className="h-4 w-4" />
-										<span>My Donations</span>
-									</Link>
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem>
-									<LogoutButton />
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+									</DropdownMenuItem>
+
+									<DropdownMenuItem>
+										<Link
+											to="/my-requests"
+											className="cursor-pointer flex items-center gap-2 w-full"
+										>
+											<FileText className="h-4 w-4" />
+											<span>My Requests</span>
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem>
+										<Link
+											to="/my-donations"
+											className="cursor-pointer flex items-center gap-2 w-full"
+										>
+											<Heart className="h-4 w-4" />
+											<span>My Donations</span>
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem>
+										<LogoutButton />
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+							<ProfileDialog
+								// @ts-ignore
+								profile={profileWithEmail}
+								open={profileDialogOpen}
+								onOpenChange={setProfileDialogOpen}
+							/>
+						</>
 					) : (
 						<Button variant="outline" size="sm">
 							<Link to="/login">Sign In</Link>
