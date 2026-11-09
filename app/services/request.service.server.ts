@@ -9,8 +9,8 @@ export class RequestService extends BaseService {
 		source: "form" | "paste" | "voice";
 		raw_input: string;
 		structured: StructuredRequest;
+		verification_state?: "unverified" | "slip_verified"; // <-- Add this
 	}) {
-		// Resolve hospital_id
 		const hospitalService = new HospitalService(this.request);
 		const hospitalId = await hospitalService.findOrCreate(params.structured.hospital_name);
 
@@ -23,10 +23,10 @@ export class RequestService extends BaseService {
 				structured: params.structured,
 				blood_group: params.structured.blood_group,
 				units_needed: params.structured.units_needed,
-				hospital_id: hospitalId, // ← now properly set
+				hospital_id: hospitalId,
 				urgency: params.structured.urgency,
 				status: "open",
-				verification_state: "unverified",
+				verification_state: params.verification_state || "unverified",
 				risk_score: null,
 				risk_signals: [],
 				needed_by: params.structured.needed_by,

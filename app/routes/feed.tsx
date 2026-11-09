@@ -187,7 +187,7 @@ export default function FeedPage() {
 												})}
 											</span>
 										</div>
-										{req.verification_state === "verified" ? (
+										{req.verification_state === "slip_verified" ? (
 											<span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
 												<ShieldCheck className="h-3 w-3" /> Slip Verified
 											</span>

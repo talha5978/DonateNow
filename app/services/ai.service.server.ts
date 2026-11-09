@@ -128,4 +128,59 @@ export class AiService {
 		}
 		return text;
 	}
+
+	/**
+	 * Verify a hospital admission slip or prescription image using Cloudflare Vision AI
+	 */
+	async verifyHospitalSlip(imageBase64: string): Promise<{
+		is_valid_slip: boolean;
+		hospital_name: string | null;
+		patient_name: string | null;
+		blood_group: string | null;
+		confidence: number;
+		reason: string;
+	}> {
+		// Remove data URL prefix if present (e.g. "data:image/jpeg;base64,...")
+		const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+		const imageBuffer = Buffer.from(cleanBase64, "base64");
+
+		const prompt = `You are a medical verification AI. Analyze this image. If it contains any text related to a hospital, medical prescription, or blood requirement, accept it.
+Return ONLY valid JSON matching this schema:
+{
+  "is_valid_slip": boolean,
+  "hospital_name": string | null,
+  "patient_name": string | null,
+  "blood_group": string | null,
+  "confidence": number (0 to 1),
+  "reason": string
+}`;
+
+		try {
+			// Cloudflare Workers AI vision model call expects an array of numbers (byte array) for binary image inputs
+			const response = await this.callModel("@cf/meta/llama-3.2-11b-vision-instruct", {
+				prompt: prompt,
+				image: [...new Uint8Array(imageBuffer)],
+				max_tokens: 400,
+			});
+
+			const content = response.result?.response;
+			if (!content) {
+				throw new ApiError("Vision AI returned empty response", 502);
+			}
+			console.log(content);
+			const jsonMatch = String(content).match(/\{[\s\S]*\}/);
+			const jsonString = jsonMatch ? jsonMatch[0] : String(content);
+			return JSON.parse(jsonString);
+		} catch (err: any) {
+			console.error("Slip vision verification failed:", err);
+			return {
+				is_valid_slip: false,
+				hospital_name: null,
+				patient_name: null,
+				blood_group: null,
+				confidence: 0,
+				reason: err.message || "Failed to process image file",
+			};
+		}
+	}
 }
