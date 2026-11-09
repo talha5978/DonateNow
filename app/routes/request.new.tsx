@@ -52,6 +52,32 @@ export async function action({ request }: ActionFunctionArgs) {
 		}
 	}
 
+	if (intent === "extract_audio") {
+		const audioFile = formData.get("audio") as File;
+		if (!audioFile || audioFile.size === 0) {
+			return { ok: false, message: "No audio recording found" };
+		}
+
+		try {
+			const arrayBuffer = await audioFile.arrayBuffer();
+			const ai = new AiService();
+
+			// 1. Transcribe audio using Cloudflare Whisper
+			const transcript = await ai.speechToText(arrayBuffer);
+			console.log("Whisper transcript:", transcript);
+
+			// 2. Extract structured request from the transcribed text
+			const structured = await ai.extractRequest(transcript);
+			return { ok: true, structured, raw_input: transcript };
+		} catch (err: any) {
+			console.log(err);
+			return {
+				ok: false,
+				message: err.message || "Voice transcription or extraction failed",
+			};
+		}
+	}
+
 	// ---------- Final submit ----------
 	const rawInput = String(formData.get("raw_input") || "");
 	const source = String(formData.get("source") || "form") as "form" | "paste" | "voice";
@@ -183,13 +209,29 @@ export default function NewRequestPage() {
 			chunks.current = [];
 
 			mediaRecorder.current.ondataavailable = (e) => chunks.current.push(e.data);
+
 			mediaRecorder.current.onstop = async () => {
 				const blob = new Blob(chunks.current, { type: "audio/webm" });
-				toast.message("Voice recorded. Speech-to-text coming next.");
+
+				// Package the audio blob into FormData and send to server action
+				const formData = new FormData();
+				formData.append("intent", "extract_audio");
+				formData.append("audio", blob, "voice-note.webm");
+
+				toast.loading("Processing voice note with AI...", { id: "voice-ai" });
+
+				extractorFetcher.submit(formData, {
+					method: "post",
+					encType: "multipart/form-data",
+				});
+
+				toast.dismiss("voice-ai");
+				setIsRecording(false);
 			};
 
 			mediaRecorder.current.start();
 			setIsRecording(true);
+			toast.success("Recording started...");
 		} catch {
 			toast.error("Microphone permission denied");
 		}
