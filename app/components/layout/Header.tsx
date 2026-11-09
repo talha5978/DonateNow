@@ -1,6 +1,6 @@
 import { Link, NavLink } from "react-router";
 import { useState } from "react";
-import { User, Heart, FileText, PlusCircle } from "lucide-react";
+import { User, Heart, FileText, PlusCircle, AlertTriangle } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
 	DropdownMenu,
@@ -38,8 +38,36 @@ export function Header({ profile: user, user: currentUser }: HeaderProps) {
 		email: currentUser?.email || user?.email,
 	};
 
+	// Calculate 56-day medical recovery cooldown status
+	const COOLDOWN_DAYS = 56;
+	let isCoolingDown = false;
+	let daysRemaining = 0;
+
+	if (user?.last_donated_at) {
+		const lastDonatedDate = new Date(user.last_donated_at).getTime();
+		const cooldownMs = COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+		const timeElapsed = Date.now() - lastDonatedDate;
+
+		if (timeElapsed < cooldownMs) {
+			isCoolingDown = true;
+			daysRemaining = Math.ceil((cooldownMs - timeElapsed) / (24 * 60 * 60 * 1000));
+		}
+	}
+
 	return (
 		<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+			{/* Warning Banner if Cooldown is Active */}
+			{isCoolingDown && (
+				<div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-4 text-center text-xs font-semibold text-amber-800 dark:text-amber-300 flex items-center justify-center gap-2">
+					<AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+					<span>
+						<strong>Donor Recovery Period Active</strong> Please wait for your recovery period
+						ending ({daysRemaining} {daysRemaining === 1 ? "day" : "days"} remaining). You cannot
+						accept new donation requests during this time.
+					</span>
+				</div>
+			)}
+
 			<div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
 				{/* Left: Logo */}
 				<div className="flex items-center gap-3">
