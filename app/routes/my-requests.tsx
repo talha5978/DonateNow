@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { AuthService } from "~/services/auth.service.server";
 import { RequestService } from "~/services/request.service.server";
+import { DonationsService } from "~/services/donations.service.server";
 
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
@@ -179,7 +180,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (!authData?.user) return redirect("/login");
 
 	const formData = await request.formData();
-
+	const intent = formData.get("intent")?.toString() || "update_request";
 	const requestId = formData.get("requestId")?.toString() || "";
 
 	const fail = (message: string) => ({
@@ -190,6 +191,29 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	if (!requestId) {
 		return fail("Missing request ID");
+	}
+
+	// Handle Fulfillment Confirmation Loop
+	if (intent === "confirm_donation") {
+		const donorId = formData.get("donorId")?.toString();
+		const units = Number(formData.get("units") || 1);
+
+		if (!donorId) {
+			return fail("Missing donor ID");
+		}
+
+		try {
+			const donationsService = new DonationsService(request);
+			await donationsService.confirmFulfillment(requestId, donorId, units);
+
+			return {
+				ok: true as const,
+				requestId,
+				message: "Donation successfully confirmed! 56-day donor cooldown initiated.",
+			};
+		} catch (error) {
+			return fail(error instanceof Error ? error.message : "Failed to confirm donation");
+		}
 	}
 
 	const unitsRaw = formData.get("units_needed")?.toString();
@@ -225,6 +249,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		return {
 			ok: true as const,
 			requestId,
+			message: "Request updated successfully",
 		};
 	} catch (error) {
 		return fail(error instanceof Error ? error.message : "Failed to update request");
@@ -249,17 +274,19 @@ export default function MyRequestsPage() {
 	const [editingId, setEditingId] = useState<string | null>(null);
 
 	// ------------------------------------------------
-	// Handle update responses
+	// Handle action responses & toasts
 	// ------------------------------------------------
 
 	useEffect(() => {
-		if (fetcher.state !== "idle" || !fetcher.data || fetcher.data.requestId !== editingId) {
+		if (fetcher.state !== "idle" || !fetcher.data) {
 			return;
 		}
 
 		if (fetcher.data.ok) {
-			setEditingId(null);
-			toast.success("Request updated successfully");
+			if (editingId) {
+				setEditingId(null);
+			}
+			toast.success(fetcher.data.message || "Operation successful");
 		} else {
 			toast.error(fetcher.data.message);
 		}
@@ -376,8 +403,6 @@ export default function MyRequestsPage() {
 				========================================== */}
 
 				<section className="space-y-5">
-					{/* Section Heading */}
-
 					<div className="flex items-center justify-between gap-3">
 						<div className="flex items-center gap-2.5">
 							<div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -397,8 +422,6 @@ export default function MyRequestsPage() {
 							{requests.length} {requests.length === 1 ? "Request" : "Requests"}
 						</span>
 					</div>
-
-					{/* Empty State */}
 
 					{requests.length === 0 ? (
 						<div className="rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
@@ -453,14 +476,11 @@ export default function MyRequestsPage() {
 										===================================== */}
 
 											<summary className="flex cursor-pointer list-none items-center gap-3 p-4 outline-none transition-colors hover:bg-muted/30 sm:p-5 [&::-webkit-details-marker]:hidden">
-												{/* Blood Group */}
 												<div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/5 text-sm font-extrabold text-primary">
 													{item.blood_group}
 												</div>
 
-												{/* Main Information */}
 												<div className="min-w-0 flex-1 space-y-1.5">
-													{/* Status Badges */}
 													<div className="flex flex-wrap items-center gap-1.5">
 														<span
 															className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getRequestStatusStyles(item.status)}`}
@@ -475,13 +495,11 @@ export default function MyRequestsPage() {
 														</span>
 													</div>
 
-													{/* Request Title */}
 													<h3 className="truncate text-sm font-bold text-foreground sm:text-base">
 														{item.units_needed} Units of {item.blood_group}{" "}
 														Required
 													</h3>
 
-													{/* Hospital */}
 													<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
 														<span className="inline-flex items-center gap-1">
 															<Building2 className="h-3.5 w-3.5" />
@@ -495,7 +513,6 @@ export default function MyRequestsPage() {
 													</div>
 												</div>
 
-												{/* Right Side */}
 												<div className="flex shrink-0 flex-col items-end gap-2">
 													<span
 														className={`hidden rounded-full border px-2 py-1 text-[10px] font-semibold sm:inline-flex ${
@@ -516,8 +533,6 @@ export default function MyRequestsPage() {
 										===================================== */}
 
 											<div className="space-y-5 border-t border-border/60 p-4 sm:p-5">
-												{/* Request Overview */}
-
 												<div className="space-y-3">
 													<div className="flex items-center justify-between gap-3">
 														<h4 className="text-sm font-bold text-foreground">
@@ -548,10 +563,6 @@ export default function MyRequestsPage() {
 															</Button>
 														)}
 													</div>
-
-													{/* Progress */}
-
-													{/* Additional Metadata */}
 
 													<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
 														<div className="rounded-xl border border-border/60 bg-muted/20 p-3.5 space-y-2">
@@ -618,6 +629,11 @@ export default function MyRequestsPage() {
 														method="post"
 														className="space-y-4 rounded-xl border border-primary/20 bg-primary/2.5 p-4"
 													>
+														<input
+															type="hidden"
+															name="intent"
+															value="update_request"
+														/>
 														<input
 															type="hidden"
 															name="requestId"
@@ -755,47 +771,101 @@ export default function MyRequestsPage() {
 															</p>
 														) : (
 															<div className="space-y-2">
-																{responses.map((resp) => (
-																	<div
-																		key={resp.id}
-																		className="flex items-start justify-between gap-2 rounded-lg bg-muted/30 p-3"
-																	>
-																		<div className="min-w-0 space-y-1">
-																			<p className="truncate text-xs font-semibold text-foreground">
-																				{resp.donor?.full_name ||
-																					"Verified Donor"}
-																			</p>
+																{responses.map((resp: any) => {
+																	const donorId =
+																		resp.donor_id || resp.donor?.id;
+																	const canConfirm =
+																		(resp.status === "accepted" ||
+																			resp.status === "arrived") &&
+																		item.status !== "fulfilled" &&
+																		item.status !== "closed";
 
-																			<p className="text-[11px] text-muted-foreground">
-																				{resp.donor?.blood_group ||
-																					"Unknown blood group"}
-																			</p>
-
-																			{resp.donor?.phone && (
-																				<a
-																					href={`tel:${resp.donor.phone}`}
-																					className="text-xs font-medium text-primary hover:underline"
-																				>
-																					{resp.donor.phone}
-																				</a>
-																			)}
-
-																			<p className="text-[10px] text-muted-foreground">
-																				{resp.responded_at
-																					? formatDate(
-																							resp.responded_at,
-																						)
-																					: "Awaiting response"}
-																			</p>
-																		</div>
-
-																		<span
-																			className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-bold ${getResponseStyles(resp.status)}`}
+																	return (
+																		<div
+																			key={resp.id}
+																			className="flex items-start justify-between gap-2 rounded-lg bg-muted/30 p-3"
 																		>
-																			{formatLabel(resp.status)}
-																		</span>
-																	</div>
-																))}
+																			<div className="min-w-0 space-y-1">
+																				<p className="truncate text-xs font-semibold text-foreground">
+																					{resp.donor?.full_name ||
+																						"Verified Donor"}
+																				</p>
+
+																				<p className="text-[11px] text-muted-foreground">
+																					{resp.donor
+																						?.blood_group ||
+																						"Unknown blood group"}
+																				</p>
+
+																				{resp.donor?.phone && (
+																					<a
+																						href={`tel:${resp.donor.phone}`}
+																						className="text-xs font-medium text-primary hover:underline"
+																					>
+																						{resp.donor.phone}
+																					</a>
+																				)}
+
+																				<p className="text-[10px] text-muted-foreground">
+																					{resp.responded_at
+																						? formatDate(
+																								resp.responded_at,
+																							)
+																						: "Awaiting response"}
+																				</p>
+																			</div>
+
+																			<div className="flex shrink-0 flex-col items-end gap-2">
+																				<span
+																					className={`rounded-full border px-2 py-1 text-[9px] font-bold ${getResponseStyles(resp.status)}`}
+																				>
+																					{formatLabel(resp.status)}
+																				</span>
+
+																				{/* CONFIRM DONATION BUTTON */}
+																				{canConfirm && donorId && (
+																					<fetcher.Form method="post">
+																						<input
+																							type="hidden"
+																							name="intent"
+																							value="confirm_donation"
+																						/>
+																						<input
+																							type="hidden"
+																							name="requestId"
+																							value={item.id}
+																						/>
+																						<input
+																							type="hidden"
+																							name="donorId"
+																							value={donorId}
+																						/>
+																						<input
+																							type="hidden"
+																							name="units"
+																							value={
+																								item.units_needed ??
+																								1
+																							}
+																						/>
+																						<Button
+																							type="submit"
+																							size="sm"
+																							variant="default"
+																							className="h-7 px-2.5 text-[10px] font-semibold "
+																							disabled={
+																								fetcher.state !==
+																								"idle"
+																							}
+																						>
+																							Confirm Donation
+																						</Button>
+																					</fetcher.Form>
+																				)}
+																			</div>
+																		</div>
+																	);
+																})}
 															</div>
 														)}
 													</div>
@@ -822,7 +892,7 @@ export default function MyRequestsPage() {
 															</p>
 														) : (
 															<div className="space-y-2">
-																{confirmations.map((conf) => (
+																{confirmations.map((conf: any) => (
 																	<div
 																		key={conf.id}
 																		className="flex items-start justify-between gap-2 rounded-lg bg-muted/30 p-3"
