@@ -72,14 +72,7 @@ export function Header({ profile: user, user: currentUser }: HeaderProps) {
 				{/* Left: Logo */}
 				<div className="flex items-center gap-3">
 					<Link to="/" className="flex items-center gap-2">
-						<img
-							src="/logo_icon.png"
-							className="h-8 w-8 mix-blend-multiply"
-							alt="DonateNow Logo"
-						/>
-						<span className="text-xl font-bold tracking-tight text-foreground">
-							Donate<span className="text-primary">Now</span>
-						</span>
+						<img src="/logo.png" className="w-37.5 mix-blend-multiply" alt="DonateNow Logo" />
 					</Link>
 				</div>
 

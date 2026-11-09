@@ -9,14 +9,7 @@ export function Footer() {
 					{/* Col 1: Brand & Info */}
 					<div className="md:col-span-2 space-y-3">
 						<div className="flex items-center gap-2">
-							<img
-								src="/logo_icon.png"
-								className="h-6 w-6 mix-blend-multiply"
-								alt="DonateNow"
-							/>
-							<span className="font-bold text-foreground text-base tracking-tight">
-								Donate<span className="text-primary">Now</span>
-							</span>
+							<img src="/logo.png" className="w-37.5 mix-blend-multiply" alt="DonateNow" />
 						</div>
 						<p className="text-sm max-w-sm leading-relaxed">
 							A peer-to-peer emergency blood coordination platform connecting donors directly

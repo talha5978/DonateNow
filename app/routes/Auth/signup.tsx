@@ -141,11 +141,11 @@ export default function SignUpPage() {
 		<div className="min-h-screen flex">
 			{/* Left side – branding / description */}
 			<div className="hidden lg:flex lg:w-1/2 bg-muted items-center justify-center p-12">
-				<div className="max-w-md space-y-4">
-					{/* <div>
+				<div className="max-w-md space-y-1">
+					<div>
 						<img src="/logo.png" className="w-40 mix-blend-multiply" alt="DonateNow" />
-					</div> */}
-					<h1 className="text-3xl font-semibold tracking-tight">DonateNow</h1>
+					</div>
+					{/* <h1 className="text-3xl font-semibold tracking-tight">DonateNow</h1> */}
 					<p className="text-muted-foreground text-lg">
 						Connecting blood donors with those in urgent need. Fast, trusted, and
 						community-driven.
@@ -157,10 +157,6 @@ export default function SignUpPage() {
 			<div className="flex-1 flex items-center justify-center p-6 sm:p-12">
 				<Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow-sm">
 					<CardHeader className="space-y-1">
-						{/* <CardTitle className="text-2xl flex gap-2 items-center">
-							<img src="/logo_icon.png" className="w-8 mix-blend-multiply" alt="" />
-							<span>Sign up</span>
-						</CardTitle> */}
 						<CardTitle className="text-2xl flex gap-2 items-center">Sign up</CardTitle>
 						<CardDescription>Enter your credentials or continue with Google</CardDescription>
 					</CardHeader>

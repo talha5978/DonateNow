@@ -3,14 +3,13 @@ import { useLoaderData, Link } from "react-router";
 import { AuthService } from "~/services/auth.service.server";
 import { MatchService, type MatchedRequest } from "~/services/match.service.server";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader } from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import {
 	MapPin,
 	Clock,
 	Droplet,
 	AlertTriangle,
 	ShieldCheck,
-	Activity,
 	User,
 	Building2,
 	ArrowUpRight,

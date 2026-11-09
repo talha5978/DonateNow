@@ -71,7 +71,7 @@ export default function MyDonationsPage() {
 
 	return (
 		<div className="min-h-screen py-8 lg:py-12">
-			<div className="mx-auto max-w-5xl space-y-8">
+			<div className="mx-auto space-y-8">
 				{/* Page Header */}
 				<header className="space-y-5">
 					<Link
