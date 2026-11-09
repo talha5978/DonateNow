@@ -4,6 +4,7 @@ import { AuthService } from "~/services/auth.service.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const auth = new AuthService(request);
+	const url = new URL(request.url);
 
 	try {
 		const { data } = await auth.getCurrentProfile();
@@ -12,38 +13,28 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			throw redirect("/login");
 		}
 
-		// if (data?.user && data.profile) {
-		// 	const isProfileIncomplete = !data.profile.blood_group || !data.profile.phone || !data.profile.geo;
+		const isProfileIncomplete = !data.profile?.blood_group || !data.profile?.phone || !data.profile?.geo;
 
-		// 	if (isProfileIncomplete) {
-		// 		return redirect("/complete-profile?from=home");
-		// 	}
-		// }
+		// IMPORTANT: only redirect if we are NOT already on the complete-profile page
+		if (isProfileIncomplete && !url.pathname.startsWith("/complete-profile")) {
+			throw redirect("/complete-profile");
+		}
 
 		return {
-			user: data?.user ?? null,
-			profile: data?.profile ?? null,
+			user: data.user,
+			profile: data.profile,
 		};
 	} catch (error) {
+		if (error instanceof Response) throw error;
 		throw redirect("/login");
 	}
 }
 
-export const meta = () => {
-	return [
-		{
-			title: "Dashboard | LedgerPilot",
-		},
-	];
-};
-
-export default function DashboardLayout() {
+export default function ProtectedLayout() {
 	return (
 		<div className="min-h-screen">
-			{/* <SidebarLayout> */}
 			<Outlet />
 			<LogoutButton />
-			{/* </SidebarLayout> */}
 		</div>
 	);
 }
