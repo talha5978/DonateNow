@@ -32,7 +32,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function ProtectedLayout() {
 	return (
-		<div className="min-h-screen">
+		<div className="min-h-screen max-w-7xl mx-auto">
 			<Outlet />
 			<LogoutButton />
 		</div>

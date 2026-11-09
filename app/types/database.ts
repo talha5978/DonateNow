@@ -138,7 +138,7 @@ export type Database = {
 					aliases?: string[];
 					city?: string | null;
 					created_at?: string;
-					geo: unknown;
+					geo?: unknown;
 					id?: string;
 					is_active?: boolean;
 					name: string;
@@ -283,14 +283,14 @@ export type Database = {
 			profiles: {
 				Row: {
 					available: boolean;
-					blood_group: Database["public"]["Enums"]["blood_group_enum"];
+					blood_group: Database["public"]["Enums"]["blood_group_enum"] | null;
 					created_at: string;
 					email: string | null;
 					full_name: string | null;
 					geo: unknown;
 					id: string;
 					last_donated_at: string | null;
-					phone: string;
+					phone: string | null;
 					radius_km: number;
 					reputation: number;
 					response_stats: Json;
@@ -300,14 +300,14 @@ export type Database = {
 				};
 				Insert: {
 					available?: boolean;
-					blood_group: Database["public"]["Enums"]["blood_group_enum"];
+					blood_group?: Database["public"]["Enums"]["blood_group_enum"] | null;
 					created_at?: string;
 					email?: string | null;
 					full_name?: string | null;
 					geo?: unknown;
 					id: string;
 					last_donated_at?: string | null;
-					phone: string;
+					phone?: string | null;
 					radius_km?: number;
 					reputation?: number;
 					response_stats?: Json;
@@ -317,14 +317,14 @@ export type Database = {
 				};
 				Update: {
 					available?: boolean;
-					blood_group?: Database["public"]["Enums"]["blood_group_enum"];
+					blood_group?: Database["public"]["Enums"]["blood_group_enum"] | null;
 					created_at?: string;
 					email?: string | null;
 					full_name?: string | null;
 					geo?: unknown;
 					id?: string;
 					last_donated_at?: string | null;
-					phone?: string;
+					phone?: string | null;
 					radius_km?: number;
 					reputation?: number;
 					response_stats?: Json;
@@ -776,6 +776,14 @@ export type Database = {
 				| { Args: { table_name: string }; Returns: string };
 			enablelongtransactions: { Args: never; Returns: string };
 			equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean };
+			find_hospital_by_name: {
+				Args: { search_term: string };
+				Returns: {
+					id: string;
+					name: string;
+					score: number;
+				}[];
+			};
 			geometry: { Args: { "": string }; Returns: unknown };
 			geometry_above: {
 				Args: { geom1: unknown; geom2: unknown };

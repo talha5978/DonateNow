@@ -4,6 +4,7 @@ export default [
 	layout("./routes/protected_layout.tsx", [
 		index("routes/home.tsx"),
 		route("complete-profile", "./routes/complete-profile.tsx"),
+		route("requests/new", "./routes/request.new.tsx"),
 	]),
 	route("auth/callback", "./routes/auth.callback.ts"),
 	route("login", "./routes/Auth/login.tsx"),
