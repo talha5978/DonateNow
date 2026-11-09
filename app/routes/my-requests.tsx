@@ -202,6 +202,10 @@ export async function action({ request }: ActionFunctionArgs) {
 			return fail("Missing donor ID");
 		}
 
+		if (units < 1 || units > 10) {
+			return fail("Unit count must be between 1 and 10");
+		}
+
 		try {
 			const donationsService = new DonationsService(request);
 			await donationsService.confirmFulfillment(requestId, donorId, units);
@@ -209,7 +213,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			return {
 				ok: true as const,
 				requestId,
-				message: "Donation successfully confirmed! 56-day donor cooldown initiated.",
+				message: `Donation of ${units} unit(s) confirmed! Cooldown initiated.`,
 			};
 		} catch (error) {
 			return fail(error instanceof Error ? error.message : "Failed to confirm donation");
@@ -771,19 +775,24 @@ export default function MyRequestsPage() {
 															</p>
 														) : (
 															<div className="space-y-2">
-																{responses.map((resp: any) => {
-																	const donorId =
-																		resp.donor_id || resp.donor?.id;
+																{responses.map((resp) => {
+																	const donorId = resp.donor?.id;
 																	const canConfirm =
 																		(resp.status === "accepted" ||
 																			resp.status === "arrived") &&
 																		item.status !== "fulfilled" &&
 																		item.status !== "closed";
 
+																	const maxSelectableUnits = Math.max(
+																		1,
+																		(item.units_needed ?? 1) -
+																			(item.units_fulfilled ?? 0),
+																	);
+
 																	return (
 																		<div
 																			key={resp.id}
-																			className="flex items-start justify-between gap-2 rounded-lg bg-muted/30 p-3"
+																			className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg bg-muted/30 p-3"
 																		>
 																			<div className="min-w-0 space-y-1">
 																				<p className="truncate text-xs font-semibold text-foreground">
@@ -815,16 +824,19 @@ export default function MyRequestsPage() {
 																				</p>
 																			</div>
 
-																			<div className="flex shrink-0 flex-col items-end gap-2">
+																			<div className="flex shrink-0 flex-col gap-2">
 																				<span
 																					className={`rounded-full border px-2 py-1 text-[9px] font-bold ${getResponseStyles(resp.status)}`}
 																				>
 																					{formatLabel(resp.status)}
 																				</span>
 
-																				{/* CONFIRM DONATION BUTTON */}
+																				{/* CONFIRM PARTIAL / FULL DONATION FORM */}
 																				{canConfirm && donorId && (
-																					<fetcher.Form method="post">
+																					<fetcher.Form
+																						method="post"
+																						className="flex items-center gap-2"
+																					>
 																						<input
 																							type="hidden"
 																							name="intent"
@@ -840,26 +852,35 @@ export default function MyRequestsPage() {
 																							name="donorId"
 																							value={donorId}
 																						/>
-																						<input
-																							type="hidden"
-																							name="units"
-																							value={
-																								item.units_needed ??
-																								1
-																							}
-																						/>
-																						<Button
-																							type="submit"
-																							size="sm"
-																							variant="default"
-																							className="h-7 px-2.5 text-[10px] font-semibold "
-																							disabled={
-																								fetcher.state !==
-																								"idle"
-																							}
-																						>
-																							Confirm Donation
-																						</Button>
+
+																						<div className="flex items-center gap-1">
+																							<Input
+																								type="number"
+																								name="units"
+																								defaultValue={Math.min(
+																									1,
+																									maxSelectableUnits,
+																								)}
+																								min={1}
+																								max={
+																									maxSelectableUnits
+																								}
+																								className="h-7 w-14 text-xs bg-background text-center"
+																								title="Units contributed"
+																							/>
+																							<Button
+																								type="submit"
+																								size="sm"
+																								variant="default"
+																								className="h-7 px-2.5 text-[10px] font-semibold"
+																								disabled={
+																									fetcher.state !==
+																									"idle"
+																								}
+																							>
+																								Confirm Units
+																							</Button>
+																						</div>
 																					</fetcher.Form>
 																				)}
 																			</div>

@@ -59,23 +59,50 @@ export class DonationsService extends BaseService {
 	}
 
 	async confirmFulfillment(requestId: string, donorId: string, units: number) {
-		// Inserts into donations table, which triggers cooldown & status updates
-		const { error } = await this.supabase.from(this.DONATIONS_TABLE).insert({
+		// 1. Insert into donations table
+		const { error: donationError } = await this.supabase.from(this.DONATIONS_TABLE).insert({
 			request_id: requestId,
 			donor_id: donorId,
 			units: units,
-			confirmed_by: donorId, // or requester id depending on context
+			confirmed_by: donorId,
 		});
 
-		if (error) throw new Error(error.message);
+		if (donationError) throw new Error(donationError.message);
 
-		// Update donor's last_donated_at timestamp to start 56-day cooldown
+		// 2. Fetch current request details to get units_needed and current units_fulfilled
+		const { data: requestData, error: reqError } = await this.supabase
+			.from(this.REQUESTS_TABLE)
+			.select("units_needed, units_fulfilled")
+			.eq("id", requestId)
+			.single();
+
+		if (reqError || !requestData) throw new Error("Request not found");
+
+		const currentFulfilled = requestData.units_fulfilled || 0;
+		const newFulfilled = currentFulfilled + units;
+
+		// Only mark as 'fulfilled' if total fulfilled meets or exceeds units_needed
+		const newStatus = newFulfilled >= requestData.units_needed ? "fulfilled" : "partially_filled";
+
+		// 3. Update request with new cumulative units_fulfilled and dynamic status
+		const { error: updateError } = await this.supabase
+			.from(this.REQUESTS_TABLE)
+			.update({
+				units_fulfilled: newFulfilled,
+				status: newStatus,
+				updated_at: new Date().toISOString(),
+			})
+			.eq("id", requestId);
+
+		if (updateError) throw new Error(updateError.message);
+
+		// 4. Trigger donor's 56-day medical cooldown
 		await this.supabase
 			.from(this.PROFILES_TABLE)
-			.update({ last_donated_at: new Date().toISOString() })
+			.update({
+				last_donated_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			})
 			.eq("id", donorId);
-
-		// Update request status to fulfilled
-		await this.supabase.from(this.REQUESTS_TABLE).update({ status: "fulfilled" }).eq("id", requestId);
 	}
 }
