@@ -31,19 +31,40 @@ export class RequestService extends BaseService {
 			);
 		}
 
-		// --- FIXED COOLDOWN CHECK ---
+		// --- COOLDOWN CHECK ---
 		if (profile.status === "throttled") {
-			// Check when the throttle penalty was applied on their profile
 			const penaltyTimestamp = profile.updated_at ? new Date(profile.updated_at).getTime() : Date.now();
-			const cooldownMs = this.COOLDOWN_MINUTES * 60 * 1000;
+			const cooldownMs = this.COOLDOWN_MINUTES * 60 * 1000; // 30 minutes
 			const timeElapsed = Date.now() - penaltyTimestamp;
 
 			if (timeElapsed < cooldownMs) {
 				const remainingMinutes = Math.ceil((cooldownMs - timeElapsed) / (60 * 1000));
 				throw new ApiError(
 					`Your account is currently throttled due to previous safety flags. Please wait ${remainingMinutes} more minute(s) before posting another request.`,
-					429, // Too Many Requests
+					429,
 				);
+			} else {
+				// ==========================================
+				// 30-MIN COOLDOWN PASSED: RESTORE TO ACTIVE
+				// ==========================================
+				// Check if they have been clean for more than 7 days to decay strikes
+				const sevenDaysMs = 7 * 24 * 60 * 1000;
+				const timeSincePenalty = Date.now() - penaltyTimestamp;
+				const currentStrikes = profile.strikes || 1;
+
+				const newStrikes =
+					timeSincePenalty > sevenDaysMs
+						? Math.max(0, currentStrikes - 1) // Decay 1 strike if clean for 7 days
+						: currentStrikes; // Keep strikes if within 7 days
+
+				await this.supabase
+					.from(this.PROFILES_TABLE)
+					.update({
+						status: "active",
+						strikes: newStrikes,
+						updated_at: new Date().toISOString(),
+					})
+					.eq("id", params.created_by);
 			}
 		}
 
