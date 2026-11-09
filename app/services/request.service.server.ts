@@ -214,7 +214,7 @@ export class RequestService extends BaseService {
 	async getUserRequestsWithConfirmations(userId: string) {
 		// 1. Fetch requests created by this user
 		const { data: requests, error } = await this.supabase
-			.from("requests")
+			.from(this.REQUESTS_TABLE)
 			.select(
 				`
                 *,

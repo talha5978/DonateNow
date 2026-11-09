@@ -14,7 +14,11 @@ import {
 	User,
 	Building2,
 	ArrowUpRight,
+	Award,
+	UserCheck,
+	AlertCircle,
 } from "lucide-react";
+import { MetricsService } from "~/services/metrics.service.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const auth = new AuthService(request);
@@ -28,7 +32,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const matchService = new MatchService(request);
 	const feedRequests = await matchService.getFeedForUser(data.user.id);
 
+	const metricsService = new MetricsService(request);
+	const metrics = await metricsService.getFeedMetrics();
+
 	return {
+		metrics,
 		user: data.user,
 		profile: data.profile,
 		feedRequests,
@@ -38,7 +46,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export const meta = () => [{ title: "Feed | DonateNow" }];
 
 export default function FeedPage() {
-	const { profile, feedRequests } = useLoaderData<typeof loader>();
+	const { profile, feedRequests, metrics } = useLoaderData<typeof loader>();
 
 	return (
 		<div className="py-8 space-y-6">
@@ -58,7 +66,83 @@ export default function FeedPage() {
 					</p>
 				</div>
 			</div>
-			{/* {JSON.stringify(feedRequests, null, 2)} */}
+
+			<section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+				{/* Critical Emergencies */}
+				<Card className="rounded-2xl border-border/70 shadow-sm">
+					<CardContent className="flex items-center gap-4 p-5">
+						<div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600">
+							<AlertCircle className="h-5 w-5" />
+						</div>
+						<div>
+							<p className="text-sm font-medium text-muted-foreground">Critical Emergencies</p>
+							<p className="mt-0.5 text-2xl font-bold tracking-tight text-foreground">
+								{metrics.criticalCount} Active
+							</p>
+							<p className="mt-0.5 text-[11px] text-rose-600 font-semibold">
+								{metrics.criticalCount > 0
+									? "Immediate attention needed"
+									: "No critical emergencies"}
+							</p>
+						</div>
+					</CardContent>
+				</Card>
+
+				{/* Ready Donors */}
+				<Card className="rounded-2xl border-border/70 shadow-sm">
+					<CardContent className="flex items-center gap-4 p-5">
+						<div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+							<UserCheck className="h-5 w-5" />
+						</div>
+						<div>
+							<p className="text-sm font-medium text-muted-foreground">Available Donors</p>
+							<p className="mt-0.5 text-2xl font-bold tracking-tight text-foreground">
+								{metrics.availableDonors}
+							</p>
+							<p className="mt-0.5 text-[11px] text-muted-foreground">
+								Passed 56-day recovery check
+							</p>
+						</div>
+					</CardContent>
+				</Card>
+
+				{/* Fulfillment Progress */}
+				<Card className="rounded-2xl border-border/70 shadow-sm">
+					<CardContent className="flex items-center gap-4 p-5">
+						<div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600">
+							<Droplet className="h-5 w-5" />
+						</div>
+						<div>
+							<p className="text-sm font-medium text-muted-foreground">Units Progress</p>
+							<p className="mt-0.5 text-2xl font-bold tracking-tight text-foreground">
+								{metrics.totalFulfilled} / {metrics.totalNeeded}
+							</p>
+							<p className="mt-0.5 text-[11px] text-muted-foreground">
+								{metrics.progressPercentage}% community fulfillment
+							</p>
+						</div>
+					</CardContent>
+				</Card>
+
+				{/* Total Lives Saved */}
+				<Card className="rounded-2xl border-border/70 shadow-sm">
+					<CardContent className="flex items-center gap-4 p-5">
+						<div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+							<Award className="h-5 w-5" />
+						</div>
+						<div>
+							<p className="text-sm font-medium text-muted-foreground">Lives Impacted</p>
+							<p className="mt-0.5 text-2xl font-bold tracking-tight text-foreground">
+								{metrics.livesImpacted}
+							</p>
+							<p className="mt-0.5 text-[11px] text-muted-foreground">
+								Total recorded donations
+							</p>
+						</div>
+					</CardContent>
+				</Card>
+			</section>
+
 			{/* Feed List Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				{feedRequests.length === 0 ? (
