@@ -123,7 +123,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			structured,
 		});
 
-		return redirect(`/request/${created.id}`);
+		return redirect(`/requests/${created.id}`);
 	} catch (err: any) {
 		return {
 			ok: false,

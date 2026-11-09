@@ -37,7 +37,7 @@ export class HospitalService extends BaseService {
 
 		// 3. No match found -> create a new hospital entry
 		const { data: created, error: createError } = await this.supabase
-			.from("hospitals")
+			.from(this.HOSPITALS_TABLE)
 			.insert({
 				name: cleanName,
 				aliases: [cleanName],
