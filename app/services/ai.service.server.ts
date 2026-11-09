@@ -38,7 +38,7 @@ export class AiService {
 	private apiToken = process.env.CLOUDFLARE_API_TOKEN!;
 	private baseUrl = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/ai/run`;
 
-	private async callModel(model: string, input: any) {
+	async callModel(model: string, input: any) {
 		const res = await fetch(`${this.baseUrl}/${model}`, {
 			method: "POST",
 			headers: {

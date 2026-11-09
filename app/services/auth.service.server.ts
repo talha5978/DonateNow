@@ -253,6 +253,14 @@ export class AuthService extends BaseService {
 			};
 		}
 
+		if (profile.status === "blocked" || profile.status === "suspended") {
+			await this.supabase.auth.signOut();
+			return {
+				data: null,
+				error: new ApiError(`Your account has been ${profile.status}. Access denied.`, 403),
+			};
+		}
+
 		const resultData = { user, profile };
 
 		// Save into memory cache with a predictable TTL (e.g., 45 seconds)
