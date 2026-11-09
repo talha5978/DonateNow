@@ -7,15 +7,14 @@ export class BaseService {
 	readonly request: Request;
 	readonly headers: Headers;
 
+	protected readonly CONFIRMATIONS_TABLE = "confirmations";
+	protected readonly DONATIONS_TABLE = "donations";
+	protected readonly HOSPITALS_TABLE = "hospitals";
+	protected readonly MODERATION_EVENTS_TABLE = "moderation_events";
+	protected readonly NOTIFICATION_LOG_TABLE = "notification_log";
 	protected readonly PROFILES_TABLE = "profiles";
-	protected readonly TRANSACTIONS_TABLE = "transactions";
-	protected readonly WEBHOOK_EVENTS_TABLE = "webhook_events";
-	protected readonly PENDING_ACTIONS_TABLE = "pending_actions";
-	protected readonly MATCHES_TABLE = "matches";
-	protected readonly INVOICES_TABLE = "invoices";
-	protected readonly CLIENTS_TABLE = "clients";
-	protected readonly AUDIT_LOGS_TABLE = "audit_log";
-	protected readonly ANNOTATIONS_TABLE = "annotations";
+	protected readonly REQUESTS_TABLE = "requests";
+	protected readonly RESPONSES_TABLE = "responses";
 
 	constructor(request: Request) {
 		const { supabase, headers } = createServerSupabaseClient(request);
