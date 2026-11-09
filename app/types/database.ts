@@ -882,6 +882,28 @@ export type Database = {
 				Returns: boolean;
 			};
 			geomfromewkt: { Args: { "": string }; Returns: unknown };
+			get_matched_requests_for_user: {
+				Args: { target_user_id: string };
+				Returns: {
+					blood_group: string;
+					created_at: string;
+					created_by: string;
+					distance_km: number;
+					hospital_city: string;
+					hospital_id: string;
+					hospital_name: string;
+					match_score: number;
+					needed_by: string;
+					raw_input: string;
+					request_id: string;
+					source: string;
+					status: string;
+					structured: Json;
+					units_needed: number;
+					urgency: string;
+					verification_state: string;
+				}[];
+			};
 			gettransactionid: { Args: never; Returns: unknown };
 			longtransactionsenabled: { Args: never; Returns: boolean };
 			populate_geometry_columns:

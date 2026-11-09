@@ -19,8 +19,8 @@ export type StructuredRequest = z.infer<typeof structuredRequestSchema>;
 export const createRequestInputSchema = z.object({
 	source: z.enum(["form", "paste", "voice"]),
 	raw_input: z.string().min(1).max(4000),
-	// Optional structured fields when coming from manual form
-	blood_group: z.enum(BLOOD_GROUPS).optional(),
+	// Blood group is required for every request; other structured fields may be extracted or omitted.
+	blood_group: z.enum(BLOOD_GROUPS, { error: "Please select a valid blood group" }),
 	units_needed: z.coerce.number().int().min(1).max(10).optional(),
 	hospital_name: z.string().optional(),
 	patient_name: z.string().optional(),

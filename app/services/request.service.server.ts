@@ -29,6 +29,7 @@ export class RequestService extends BaseService {
 				verification_state: "unverified",
 				risk_score: null,
 				risk_signals: [],
+				needed_by: params.structured.needed_by,
 			})
 			.select()
 			.single();

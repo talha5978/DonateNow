@@ -7,7 +7,7 @@ import { AuthService } from "~/services/auth.service.server";
 import { AiService } from "~/services/ai.service.server";
 import { RequestService } from "~/services/request.service.server";
 import { createRequestInputSchema, BLOOD_GROUPS, URGENCY_LEVELS } from "~/schemas/request";
-import { Field, FieldLabel, FieldGroup } from "~/components/ui/field";
+import { Field, FieldLabel, FieldError, FieldGroup } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
@@ -85,7 +85,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const payload = {
 		source,
 		raw_input: rawInput,
-		blood_group: formData.get("blood_group") as string,
+		blood_group: String(formData.get("blood_group") || "").trim() || undefined,
 		units_needed: formData.get("units_needed"),
 		hospital_name: formData.get("hospital_name") as string,
 		patient_name: formData.get("patient_name") as string,
@@ -96,6 +96,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const parsed = createRequestInputSchema.safeParse(payload);
 	if (!parsed.success) {
+		console.log(parsed.error);
 		return {
 			ok: false,
 			message: "Validation failed",
@@ -104,7 +105,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	const structured = {
-		blood_group: parsed.data.blood_group!,
+		blood_group: parsed.data.blood_group,
 		units_needed: parsed.data.units_needed || 1,
 		hospital_name: parsed.data.hospital_name || "Unknown",
 		patient_name: parsed.data.patient_name,
@@ -137,6 +138,10 @@ export default function NewRequestPage() {
 	const actionData = useActionData<typeof action>();
 	const navigation = useNavigation();
 	const isSubmitting = navigation.state === "submitting";
+	const bloodGroupError =
+		actionData && !actionData.ok && "errors" in actionData
+			? actionData.errors?.blood_group?.[0]
+			: undefined;
 
 	// Use fetcher for AI extraction
 	const extractorFetcher = useFetcher<typeof action>();
@@ -340,26 +345,36 @@ export default function NewRequestPage() {
 													control={control}
 													name="blood_group"
 													render={({ field }) => (
-														<Select
-															value={field.value}
-															onValueChange={field.onChange}
-															disabled={isSubmitting}
-														>
-															<SelectTrigger>
-																<SelectValue placeholder="Select" />
-															</SelectTrigger>
-															<SelectContent>
-																{BLOOD_GROUPS.map((g) => (
-																	<SelectItem key={g} value={g}>
-																		{g}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
+														<>
+															<Select
+																value={field.value}
+																onValueChange={field.onChange}
+																disabled={isSubmitting}
+															>
+																<SelectTrigger
+																	aria-invalid={!!bloodGroupError}
+																>
+																	<SelectValue placeholder="Select" />
+																</SelectTrigger>
+																<SelectContent>
+																	{BLOOD_GROUPS.map((g) => (
+																		<SelectItem key={g} value={g}>
+																			{g}
+																		</SelectItem>
+																	))}
+																</SelectContent>
+															</Select>
+															<input
+																type="hidden"
+																name={field.name}
+																value={field.value}
+															/>
+														</>
 													)}
 												/>
-												{/* Hidden input to pass value in form submission */}
-												<input type="hidden" {...register("blood_group")} />
+												{bloodGroupError && (
+													<FieldError>{bloodGroupError}</FieldError>
+												)}
 											</Field>
 
 											<Field>
