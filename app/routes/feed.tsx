@@ -196,13 +196,7 @@ export default function FeedPage() {
 										)}
 									</div>
 
-									<div className="flex items-center gap-2 self-end">
-										{req.match_score && (
-											<span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-emerald-500/20">
-												<Activity className="h-3 w-3" />
-												{Math.round(req.match_score)}% Match
-											</span>
-										)}
+									<div className="self-end">
 										<Button
 											size="sm"
 											className="font-medium text-xs h-9 px-4 shadow-2xs group-hover:bg-primary/90"
