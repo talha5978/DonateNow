@@ -1,0 +1,10 @@
+build
+dist
+.env
+
+.vscode/
+.agents/
+README.md
+
+logs/
+*.log
