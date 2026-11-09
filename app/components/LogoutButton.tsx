@@ -1,8 +1,7 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useActionData, useNavigate } from "react-router";
 import { toast } from "sonner";
-import { Button } from "~/components/ui/button";
 
 export function LogoutButton() {
 	const navigate = useNavigate();
@@ -33,8 +32,11 @@ export function LogoutButton() {
 	};
 
 	return (
-		<Button onClick={onLogout} size={"sm"}>
-			{isLoading ? <Loader2 className="mr-2 animate-spin" /> : null} Logout
-		</Button>
+		<button
+			onClick={onLogout}
+			className="flex items-center gap-2 w-full text-destructive focus:text-destructive cursor-pointer"
+		>
+			{isLoading ? <Loader2 className="animate-spin" /> : <LogOut />} Logout
+		</button>
 	);
 }

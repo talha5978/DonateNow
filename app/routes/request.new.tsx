@@ -150,8 +150,6 @@ export default function NewRequestPage() {
 		register,
 		control,
 		setValue,
-		reset,
-		handleSubmit,
 		formState: { errors },
 	} = useForm({
 		defaultValues: {
