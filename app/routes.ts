@@ -8,6 +8,7 @@ export default [
 		route("requests/:id", "./routes/request.tsx"),
 		route("my-requests", "./routes/my-requests.tsx"),
 		route("update-profile", "./routes/update-profile.ts"),
+		route("my-donations", "./routes/my-donations.tsx"),
 	]),
 	route("home", "./routes/home.tsx"),
 	route("auth/callback", "./routes/auth.callback.ts"),

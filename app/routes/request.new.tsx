@@ -286,7 +286,7 @@ export default function NewRequestPage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-muted/30 py-10 px-4">
+		<div className="min-h-screen bg-muted/30 py-10">
 			<div className="max-w-2xl mx-auto">
 				<Card className="border border-border/60 shadow-sm rounded-2xl">
 					<CardHeader className="space-y-1">

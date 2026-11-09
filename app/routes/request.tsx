@@ -75,7 +75,7 @@ export default function RequestDetailPage() {
 	const isSubmitting = fetcher.state !== "idle";
 
 	return (
-		<div className="py-10 max-w-3xl mx-auto px-4 sm:px-6 space-y-6">
+		<div className="py-10 max-w-3xl mx-auto sm:px-6 space-y-6">
 			{/* Top Navigation Bar */}
 			<div>
 				<Link to="/">
