@@ -32,6 +32,51 @@ export class AuthService extends BaseService {
 	}
 
 	/**
+	 * Sign up with email, password, and optional metadata
+	 */
+	async signUpWithPassword({
+		email,
+		password,
+		options,
+	}: {
+		email: string;
+		password: string;
+		options?: {
+			data?: {
+				full_name?: string;
+				phone?: string;
+				blood_group?: string;
+				[key: string]: any;
+			};
+		};
+	}): Promise<AuthResult<{ user: User | null; session: Session | null }>> {
+		try {
+			const { data, error } = await this.supabase.auth.signUp({
+				email,
+				password,
+				options,
+			});
+
+			if (error) {
+				return {
+					data: null,
+					error: new ApiError(error.message, 400, [error]),
+				};
+			}
+
+			return {
+				data: { user: data.user, session: data.session },
+				error: null,
+			};
+		} catch (err: any) {
+			return {
+				data: null,
+				error: new ApiError(err.message || "Failed to sign up", 500),
+			};
+		}
+	}
+
+	/**
 	 * Initiate Google OAuth sign-in flow
 	 */
 	async signInWithGoogle(redirectToUrl: string): Promise<AuthResult<{ url: string }>> {

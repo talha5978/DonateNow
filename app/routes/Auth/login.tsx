@@ -1,5 +1,5 @@
-import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { Form, useActionData, useNavigation } from "react-router";
+import { Link, redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { Form, useActionData, useFetcher, useNavigation } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import { AuthService } from "~/services/auth.service.server";
 import { Field, FieldLabel, FieldError, FieldGroup } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 
 const loginSchema = z.object({
 	email: z.string().min(1, "Email is required").email("Please enter a valid email"),
@@ -97,25 +97,41 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function LoginPage() {
 	const actionData = useActionData<typeof action>();
+	const fetcher = useFetcher<typeof action>();
 	const navigation = useNavigation();
-	const isSubmitting = navigation.state === "submitting";
+	const isSubmitting = navigation.state !== "idle" || fetcher.state !== "idle";
 
-	const {
-		register,
-		formState: { errors },
-	} = useForm<LoginFormValues>({
+	const form = useForm<LoginFormValues>({
 		resolver: zodResolver(loginSchema),
 		defaultValues: {
 			email: "",
 			password: "",
 		},
 	});
+	const {
+		register,
+		handleSubmit,
+		formState: { errors },
+	} = form;
+
+	const fetcherErrors =
+		fetcher.data && !fetcher.data.ok && "errors" in fetcher.data ? fetcher.data.errors : undefined;
 
 	useEffect(() => {
 		if (actionData && !actionData.ok) {
 			toast.error(actionData.message || "Something went wrong");
 		}
 	}, [actionData]);
+
+	useEffect(() => {
+		if (fetcher.data && !fetcher.data.ok && !("errors" in fetcher.data)) {
+			toast.error(fetcher.data.message || "Something went wrong");
+		}
+	}, [fetcher.data]);
+
+	const onSubmit = handleSubmit((values) => {
+		fetcher.submit(values, { method: "post" });
+	});
 
 	return (
 		<div className="min-h-screen flex">
@@ -186,9 +202,9 @@ export default function LoginPage() {
 						</div>
 
 						{/* Email / Password Form */}
-						<Form method="post" className="space-y-4">
+						<fetcher.Form method="post" noValidate className="space-y-4" onSubmit={onSubmit}>
 							<FieldGroup>
-								<Field data-invalid={!!errors.email}>
+								<Field data-invalid={!!errors.email || !!fetcherErrors?.email?.[0]}>
 									<FieldLabel htmlFor="email">Email</FieldLabel>
 									<Input
 										id="email"
@@ -196,13 +212,17 @@ export default function LoginPage() {
 										placeholder="you@example.com"
 										autoComplete="email"
 										disabled={isSubmitting}
-										aria-invalid={!!errors.email}
+										aria-invalid={!!errors.email || !!fetcherErrors?.email?.[0]}
 										{...register("email")}
 									/>
-									{errors.email && <FieldError>{errors.email.message}</FieldError>}
+									{(errors.email?.message || fetcherErrors?.email?.[0]) && (
+										<FieldError>
+											{errors.email?.message || fetcherErrors?.email?.[0]}
+										</FieldError>
+									)}
 								</Field>
 
-								<Field data-invalid={!!errors.password}>
+								<Field data-invalid={!!errors.password || !!fetcherErrors?.password?.[0]}>
 									<FieldLabel htmlFor="password">Password</FieldLabel>
 									<Input
 										id="password"
@@ -210,18 +230,34 @@ export default function LoginPage() {
 										placeholder="••••••••"
 										autoComplete="current-password"
 										disabled={isSubmitting}
-										aria-invalid={!!errors.password}
+										aria-invalid={!!errors.password || !!fetcherErrors?.password?.[0]}
 										{...register("password")}
 									/>
-									{errors.password && <FieldError>{errors.password.message}</FieldError>}
+									{(errors.password?.message || fetcherErrors?.password?.[0]) && (
+										<FieldError>
+											{errors.password?.message || fetcherErrors?.password?.[0]}
+										</FieldError>
+									)}
 								</Field>
 							</FieldGroup>
 
 							<Button type="submit" className="w-full" disabled={isSubmitting}>
 								{isSubmitting ? "Signing in…" : "Sign in with Email"}
 							</Button>
-						</Form>
+						</fetcher.Form>
 					</CardContent>
+					<CardFooter>
+						<div className="flex justify-between items-center">
+							Dont have an account?{" "}
+							<Link
+								to="/signup"
+								prefetch="intent"
+								className="ml-1 text-primary hover:underline"
+							>
+								Sign up
+							</Link>
+						</div>
+					</CardFooter>
 				</Card>
 			</div>
 		</div>
