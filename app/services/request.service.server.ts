@@ -3,6 +3,7 @@ import { ApiError } from "~/utils/errors/ApiError";
 import type { StructuredRequest } from "~/schemas/request";
 import { HospitalService } from "~/services/hospital.service.server";
 import { ModerationService } from "~/services/moderation.service.server";
+import type { Database } from "~/types/database";
 
 export class RequestService extends BaseService {
 	private readonly COOLDOWN_MINUTES = 30;
@@ -208,5 +209,55 @@ export class RequestService extends BaseService {
 				throw new ApiError(error.message, 500);
 			}
 		}
+	}
+
+	async getUserRequestsWithConfirmations(userId: string) {
+		// 1. Fetch requests created by this user
+		const { data: requests, error } = await this.supabase
+			.from("requests")
+			.select(
+				`
+                *,
+                hospitals (name, city),
+                responses (
+                    id,
+                    status,
+                    responded_at,
+                    donor:profiles!donor_id (id, full_name, phone, blood_group)
+                ),
+                confirmations (
+                    id,
+                    type,
+                    created_at,
+                    user:profiles!user_id (id, full_name, phone)
+                )
+            `,
+			)
+			.eq("created_by", userId)
+			.order("created_at", { ascending: false });
+
+		if (error) throw new Error(error.message);
+		return requests || [];
+	}
+
+	async updateRequestDetails(
+		requestId: string,
+		userId: string,
+		updates: {
+			units_needed?: number;
+			urgency?: Database["public"]["Enums"]["urgency_enum"];
+			status?: Database["public"]["Enums"]["request_status_enum"];
+		},
+	) {
+		const { data, error } = await this.supabase
+			.from(this.REQUESTS_TABLE)
+			.update(updates)
+			.eq("id", requestId)
+			.eq("created_by", userId)
+			.select("id")
+			.maybeSingle();
+
+		if (error) throw new Error(error.message);
+		if (!data) throw new Error("Request not found or you do not have permission to update it");
 	}
 }

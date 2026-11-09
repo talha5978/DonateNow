@@ -6,6 +6,7 @@ export default [
 		route("complete-profile", "./routes/complete-profile.tsx"),
 		route("requests/new", "./routes/request.new.tsx"),
 		route("requests/:id", "./routes/request.tsx"),
+		route("my-requests", "./routes/my-requests.tsx"),
 	]),
 	route("home", "./routes/home.tsx"),
 	route("auth/callback", "./routes/auth.callback.ts"),
