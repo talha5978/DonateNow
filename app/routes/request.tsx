@@ -18,6 +18,7 @@ import {
 	Building2,
 	User,
 } from "lucide-react";
+import type { StructuredRequest } from "~/schemas/request";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const auth = new AuthService(request);
@@ -69,7 +70,7 @@ export default function RequestDetailPage() {
 	const isCritical = requestItem.urgency === "critical";
 	const isUrgent = requestItem.urgency === "urgent";
 	const hospital = requestItem.hospitals;
-	const structured = requestItem.structured || {};
+	const structured = (requestItem.structured as StructuredRequest) || {};
 
 	const currentStatus = donorResponse?.status;
 	const isSubmitting = fetcher.state !== "idle";
@@ -172,7 +173,7 @@ export default function RequestDetailPage() {
 							</p>
 							<p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium pt-0.5 flex items-center gap-1">
 								<ShieldCheck className="h-3.5 w-3.5" />
-								{requestItem.verification_state === "verified"
+								{requestItem.verification_state === "slip_verified"
 									? "Hospital Slip Verified"
 									: "Active Emergency Request"}
 							</p>
