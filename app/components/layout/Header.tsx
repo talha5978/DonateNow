@@ -96,12 +96,12 @@ export function Header({ profile: user, user: currentUser }: HeaderProps) {
 						Active Requests
 					</NavLink>
 					<NavLink
-						to="/about"
+						to="/my-donations"
 						className={({ isActive }) =>
 							isActive ? "text-primary underline decoration-2 underline-offset-4" : ""
 						}
 					>
-						How it Works
+						My Donations
 					</NavLink>
 				</nav>
 

@@ -34,8 +34,8 @@ export function Footer() {
 								</Link>
 							</li>
 							<li>
-								<Link to="/about" className="hover:text-foreground transition-colors">
-									How AI Verification Works
+								<Link to="/my-donations" className="hover:text-foreground transition-colors">
+									My Donations
 								</Link>
 							</li>
 						</ul>
