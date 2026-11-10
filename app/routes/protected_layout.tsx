@@ -1,4 +1,5 @@
 import { redirect, Outlet, type LoaderFunctionArgs, useLoaderData } from "react-router";
+import { IntentSwitcher } from "~/components/IntentSwitcher";
 import { Footer } from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
 import { AuthService } from "~/services/auth.service.server";
@@ -40,6 +41,7 @@ export default function ProtectedLayout() {
 				<Outlet />
 			</main>
 			<Footer />
+			<IntentSwitcher profile={profile ?? null} />
 		</div>
 	);
 }

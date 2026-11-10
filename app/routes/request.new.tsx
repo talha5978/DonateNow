@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Mic, MicOff, Loader2, ShieldCheck, Sparkles, FileText } from "lucide-react";
+import { useSearchParams } from "react-router";
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const auth = new AuthService(request);
@@ -179,7 +180,10 @@ export default function NewRequestPage() {
 	const extractorFetcher = useFetcher<typeof action>();
 	const slipFetcher = useFetcher<typeof action>();
 
-	const [mode, setMode] = useState<"form" | "paste" | "voice">("form");
+	const [searchParams] = useSearchParams();
+	const initialMode = (searchParams.get("mode") as "form" | "paste" | "voice") || "form";
+	const [mode, setMode] = useState<"form" | "paste" | "voice">(initialMode);
+
 	const [isRecording, setIsRecording] = useState(false);
 	const [slipVerifiedFlag, setSlipVerifiedFlag] = useState(false);
 	const [_, setUploadedSlipName] = useState<string | null>(null);
