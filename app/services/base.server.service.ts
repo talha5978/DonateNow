@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from "~/lib/supabase/supabase.server";
 import type { Database } from "~/types/database";
 
 export class BaseService {
-	protected supabase: SupabaseClient<Database>;
+	supabase: SupabaseClient<Database>;
 	readonly request: Request;
 	readonly headers: Headers;
 
